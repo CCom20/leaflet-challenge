@@ -20,14 +20,6 @@ const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_wee
 function geoData(){
     d3.json(`${eqURL}`, function(response){
         console.log(response);
-
-        let coordinates = []; 
-
-        response.features.forEach(item => {coordinates.push(item.geometry.coordinates)});
-        
-        let magnitude = []; 
-
-        response.features.forEach(item => {magnitude.push(item.properties.mag)});
         
         response.features.forEach(item => {
             let circle = L.circle([item.geometry.coordinates[1], item.geometry.coordinates[0]], {
@@ -36,6 +28,8 @@ function geoData(){
                 fillOpacity: 0.5, 
                 radius: item.properties.mag * 10000
             }).addTo(myMap)
+
+            circle.bindPopup(`${item.properties.title}`);
         })
     })
 };
