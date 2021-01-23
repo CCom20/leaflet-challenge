@@ -17,21 +17,31 @@ accessToken: API_KEY
 
 const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
+function colorScale(depth) {
+    return depth >= 8 ? 'red' :
+    depth >= 6 ? 'orange' :
+    depth >= 4 ? 'yellow' :
+    depth >= 2 ? 'green' :
+    depth >= 0 ? 'blue' :
+    'grey'; 
+};
+
 function geoData(){
     d3.json(`${eqURL}`, function(response){
         console.log(response);
         
         response.features.forEach(item => {
             let circle = L.circle([item.geometry.coordinates[1], item.geometry.coordinates[0]], {
-                color: 'green',
-                fillColor: 'green',
+                color: colorScale(item.geometry.coordinates[2]),
+                fillColor: colorScale(item.geometry.coordinates[2]),
                 fillOpacity: 0.5, 
                 radius: item.properties.mag * 10000
             }).addTo(myMap)
 
-            circle.bindPopup(`${item.properties.title}`);
+            circle.bindPopup(`${item.properties.title}<br /> ${new Date(item.properties.time)}`);
+
         })
     })
 };
 
-geoData(); 
+geoData();
