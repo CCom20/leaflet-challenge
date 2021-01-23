@@ -1,7 +1,7 @@
 // Creating our initial map object
-var myMap = L.map("map-id", {
+let myMap = L.map("map-id", {
     center: [45.52, -90.67],
-    zoom: 13
+    zoom: 5
   });
   
 // Adding a tile layer (the background map image) to our map
@@ -14,3 +14,30 @@ zoomOffset: -1,
 id: "mapbox/streets-v11",
 accessToken: API_KEY
 }).addTo(myMap);
+
+const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+
+function geoData(){
+    d3.json(`${eqURL}`, function(response){
+        console.log(response);
+
+        let coordinates = []; 
+
+        response.features.forEach(item => {coordinates.push(item.geometry.coordinates)});
+        
+        let magnitude = []; 
+
+        response.features.forEach(item => {magnitude.push(item.properties.mag)});
+        
+        response.features.forEach(item => {
+            let circle = L.circle([item.geometry.coordinates[1], item.geometry.coordinates[0]], {
+                color: 'green',
+                fillColor: 'green',
+                fillOpacity: 0.5, 
+                radius: item.properties.mag * 10000
+            }).addTo(myMap)
+        })
+    })
+};
+
+geoData(); 
