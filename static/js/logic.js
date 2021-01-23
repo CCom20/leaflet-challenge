@@ -18,12 +18,12 @@ accessToken: API_KEY
 const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
 function colorScale(depth) {
-    return depth >= 8 ? '#4682B4' :
-    depth >= 6 ? 'orange' :
-    depth >= 4 ? 'yellow' :
-    depth >= 2 ? 'green' :
-    depth >= 0 ? 'blue' :
-    'grey'; 
+    return depth >= 80 ? '#b52323' :
+    depth >= 60 ? '#c9433f' :
+    depth >= 40 ? '#dc605c' :
+    depth >= 20 ? '#ed7b79' :
+    depth >= 0 ? '#fd9696' :
+    'white'; 
 };
 
 function geoData(){
@@ -34,14 +34,53 @@ function geoData(){
             let circle = L.circle([item.geometry.coordinates[1], item.geometry.coordinates[0]], {
                 color: colorScale(item.geometry.coordinates[2]),
                 fillColor: colorScale(item.geometry.coordinates[2]),
-                fillOpacity: 0.5, 
+                fillOpacity: 0.9, 
                 radius: item.properties.mag * 10000
             }).addTo(myMap)
 
-            circle.bindPopup(`${item.properties.title}<br /> ${new Date(item.properties.time)}`);
+            circle.bindPopup(`<h3>${item.properties.title}</h3>
+                <hr /><h3><strong>Date</strong></h3>
+                ${new Date(item.properties.time)}`);
 
         })
+
+        var legend = L.control({position: 'bottomright'});
+
+        legend.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                magnitudes = ["100 - 80", "79 - 60", "59 - 40", "39 - 20", " 19 - 0"]; 
+                labels = [];
+
+            for (var i = 0; i < magnitudes.length; i++) {
+
+                let scale = [80, 60, 40, 20, 0] 
+
+                div.innerHTML +=
+                    '<i style="background:' + colorScale(scale[i]) + '"></i> ' + magnitudes[i] + '<br>';
+            }
+
+            return div;
+        };
+
+        legend.addTo(myMap);
+
     })
 };
 
+let platesURL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
+
+function tectonicPlates() {
+    d3.json(`${platesURL}`, function(plates){
+        console.log(plates);
+    
+        plates.features.forEach(item => {
+            var polyline = L.polyline([item.geometry.coordinates]).addTo(myMap);
+        })
+    })
+
+    myMap.fitBounds(polyline.getBounds());
+};
+
+tectonicPlates(); 
 geoData();
