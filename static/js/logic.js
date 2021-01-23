@@ -18,7 +18,7 @@ accessToken: API_KEY
 const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
 function colorScale(depth) {
-    return depth >= 8 ? 'red' :
+    return depth >= 8 ? '#4682B4' :
     depth >= 6 ? 'orange' :
     depth >= 4 ? 'yellow' :
     depth >= 2 ? 'green' :
