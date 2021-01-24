@@ -1,11 +1,34 @@
-// Creating our initial map object
-let myMap = L.map("map-id", {
-    center: [45.52, -90.67],
-    zoom: 5
-  });
+
+const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+
+d3.json(`${eqURL}`, function(data) {
+    initMap(data.features); 
+})
   
-// Adding a tile layer (the background map image) to our map
-// We use the addTo method to add objects to our map
+function initMap(data) {
+
+    function onEachFeature(feature, layer) {
+        layer.bindPopup(`<h3>${feature.properties.title}</h3>
+        <hr /><h3><strong>Date</strong></h3>
+        ${new Date(feature.properties.time)}`);
+    }
+
+    let earthquakes = L.geoJSON(data, {
+        pointToLayer: function(data, latlng) {
+            return L.circle(latlng, {
+                color: colorScale(data.geometry.coordinates[2]),
+                fillColor: colorScale(data.geometry.coordinates[2]),
+                fillOpacity: 0.4, 
+                radius: data.properties.mag * 10000
+            })
+        },
+        onEachFeature: onEachFeature
+    });
+    
+    eqMap(earthquakes);
+
+}
+
 function eqMap(earthquakes){
    
     let lightMap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -15,7 +38,7 @@ function eqMap(earthquakes){
         zoomOffset: -1,
         id: "mapbox/light-v10",
         accessToken: API_KEY
-    })
+    });
 
     let darkMap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
         attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -24,7 +47,7 @@ function eqMap(earthquakes){
         zoomOffset: -1,
         id: "mapbox/dark-v10",
         accessToken: API_KEY
-    })
+    }); 
 
     let satellite = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
         attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -33,47 +56,38 @@ function eqMap(earthquakes){
         zoomOffset: -1,
         id: "mapbox/satellite-v9",
         accessToken: API_KEY
-    })
-    
-    .addTo(myMap);
-
-}
-
-
-const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
-
-function colorScale(depth) {
-    return depth >= 80 ? '#b52323' :
-    depth >= 60 ? '#c9433f' :
-    depth >= 40 ? '#dc605c' :
-    depth >= 20 ? '#ed7b79' :
-    depth >= 0 ? '#fd9696' :
-    'white'; 
-};
-
-function earthquakes(data) {
-
-    // Define a function we want to run once for each feature in the features array
-    // Give each feature a popup describing the place and time of the earthquake
-    function onEachFeature(feature, layer) {
-      layer.bindPopup(`<h3>${feature.properties.title}</h3>
-      <hr /><h3><strong>Date</strong></h3>
-      ${new Date(feature.properties.time)}`);
-    }
-  
-    // Create a GeoJSON layer containing the features array on the earthquakeData object
-    // Run the onEachFeature function once for each piece of data in the array
-    var earthquakes = L.geoJSON(data, {
-        pointToLayer: function(data, latlng) {
-            return L.circle(latlng, {
-                color: colorScale(data.geometry.coordinates[2]),
-                fillColor: colorScale(data.geometry.coordinates[2]),
-                fillOpacity: 0.4, 
-                radius: data.properties.mag * 10000
-            }).addTo(myMap)
-        },
-        onEachFeature: onEachFeature
     });
+
+    let plates = new L.LayerGroup();
+
+    let baseMaps = {
+        "Light": lightMap,
+        "Dark": darkMap,
+        "Satellite": satellite
+    };
+
+    let overlayMaps = {
+        Earthquakes: earthquakes,
+        Plates: plates
+    }
+    
+    let myMap = L.map("map-id", {
+        center: [45.52, -90.67],
+        zoom: 5,
+        layers: [lightMap, earthquakes, plates]
+    });
+
+    let platesURL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
+
+    d3.json(`${platesURL}`, function(data){
+        L.geoJSON(data, {
+                style: function() {
+                    return {color: "orange", fillOpacity: 0.5}
+                }
+            }).addTo(plates)
+        });
+
+    L.control.layers(baseMaps, overlayMaps).addTo(myMap);
 
     var legend = L.control({position: 'bottomright'});
 
@@ -96,36 +110,17 @@ function earthquakes(data) {
             return div;
         };
 
-        legend.addTo(myMap);
+    legend.addTo(myMap);
   
-    // Sending our earthquakes layer to the createMap function
-    eqMap(earthquakes);
-}
-  
-d3.json(`${eqURL}`, function(data) {
-    earthquakes(data.features); 
-})
 
-function geoData(){
-    d3.json(`${eqURL}`, function(response){
-        console.log(response);
-    
-
-    
-
-    })
 };
 
-let platesURL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
 
-function tectonicPlates() {
-    d3.json(`${platesURL}`, function(plates){
-        L.geoJSON(plates, {
-            style: function() {
-                return {color: "orange", fillOpacity: 0.5}
-            }
-        }).addTo(myMap)
-    })
+function colorScale(depth) {
+    return depth >= 80 ? '#b52323' :
+    depth >= 60 ? '#c9433f' :
+    depth >= 40 ? '#dc605c' :
+    depth >= 20 ? '#ed7b79' :
+    depth >= 0 ? '#fd9696' :
+    'white'; 
 };
-
-tectonicPlates(); 
