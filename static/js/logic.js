@@ -1,6 +1,8 @@
 
 const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
+API_KEY = config.api_key
+
 d3.json(`${eqURL}`, function(data) {
     initMap(data.features); 
 })
