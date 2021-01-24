@@ -1,7 +1,6 @@
-
 const eqURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
-API_KEY = config.api_key
+let key = API_KEY
 
 d3.json(`${eqURL}`, function(data) {
     initMap(data.features); 
@@ -39,7 +38,7 @@ function eqMap(earthquakes){
         maxZoom: 18,
         zoomOffset: -1,
         id: "mapbox/light-v10",
-        accessToken: API_KEY
+        accessToken: key
     });
 
     let darkMap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -48,7 +47,7 @@ function eqMap(earthquakes){
         maxZoom: 18,
         zoomOffset: -1,
         id: "mapbox/dark-v10",
-        accessToken: API_KEY
+        accessToken: key
     }); 
 
     let satellite = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -57,7 +56,7 @@ function eqMap(earthquakes){
         maxZoom: 18,
         zoomOffset: -1,
         id: "mapbox/satellite-v9",
-        accessToken: API_KEY
+        accessToken: key
     });
 
     let plates = new L.LayerGroup();
